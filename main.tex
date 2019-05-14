@@ -1,0 +1,68 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=3cm]{geometry}
+\usepackage{amsmath}
+\usepackage[style=authoryear, citestyle=authoryear]{biblatex}
+\usepackage[colorlinks=true, citecolor=blue, linkcolor=blue, hyperfootnotes=false]{hyperref} 
+\usepackage[multiple]{footmisc}
+
+\title{CTA200H Computing Assignment}
+\author{Mathew Bub \\ Supervisor: Cristobal Petrovich}
+\date{May 17, 2019}
+
+\newcommand{\evec}{\mathbf{e}}
+\newcommand{\ehat}{\hat{\evec}}
+\newcommand{\jvec}{{\mathbf{j}}}
+\newcommand{\jhat}{\hat{\jvec}}
+\newcommand{\Jvec}{\mathbf{J}}
+\newcommand{\rpl}{\mathbf{r_{\mathrm{pl}}}}
+\newcommand{\rplhat}{\mathbf{\hat{r}_{\mathrm{pl}}}}
+
+\addbibresource{refs.bib}
+
+\begin{document}
+
+\maketitle
+
+\section*{Introduction}
+This assignment studies the evolution of a binary system under the influence of the tidal field of a distant third body. In this case, we study the evolution of the orbit of the Moon under the effect of the tidal field of the Sun.
+
+Here, we will use vectorial formalism \parencite{tremaine2014} to describe the orbits under study, rather than the more traditional orbital elements. Under the vectorial formalism, we define an orthonormal basis $\{\ehat, \jhat \times \ehat, \jhat\}$, where $\ehat$ points in the direction of the pericentre of the Moon's orbit, and $\jhat$ points in the direction of the angular momentum $\Jvec$. Then, the shape of the Moon's orbit is described by
+\begin{align}
+    \evec &= e \, \ehat \label{eq:evec} \\
+    \jvec &= \sqrt{1-e^2} \, \jhat \label{eq:jvec}
+\end{align}
+where $e$ is the eccentricity of the orbit. 
+
+\section*{Part 1: The Evolution of Moons Around Planets}
+Assuming that the Moon is massless, then according to the assignment sheet and the accompanying notes by Antognini, the secular evolution for the Moon perturbed by the Sun reads
+\begin{align}
+    \frac{d\evec}{dt} &= -\tau_{\mathrm{moon}}^{-1}[2 \jvec \times \evec - 5(\rplhat \cdot \evec) \jvec \times \rplhat + (\rplhat \cdot \jvec) \evec \times \rplhat] \label{eq:devec} \\
+    \frac{d\jvec}{dt} &= -\tau_{\mathrm{moon}}^{-1}[(\rplhat \cdot \jvec) \jvec \times \rplhat - 5(\rplhat \cdot \evec) \evec \times \rplhat] \label{eq:djvec}
+\end{align}
+where $\rpl$ is the position of the Earth in its orbit about the Sun, which is assumed to be circular and is therefore given by
+\begin{equation} \label{eq:rpl}
+    \rpl(t) = 1 \, \mathrm{AU} \, (\cos(t/1 \, \mathrm{year}), \; \sin(t/1 \, \mathrm{year}), \; 0)
+\end{equation}
+and
+\begin{equation} \label{eq:tau}
+    \tau_{\mathrm{moon}} = \frac{m_{\mathrm{earth}}}{m_{\mathrm{sun}}} \frac{r_{\mathrm{pl}}(t)^3}{a_{\mathrm{moon}}^3} \frac{P_{\mathrm{moon}}}{3 \pi}.
+\end{equation}
+By Kepler's third law, we also have that
+\begin{equation} \label{eq:Pmoon}
+    P_{\mathrm{moon}} = 2\pi \left( \frac{a_{\mathrm{moon}}^3}{Gm_{\mathrm{earth}}} \right)^{1/2}.
+\end{equation}
+
+Using this, we can calculate $\tau_{\mathrm{moon}}$ for the current separation of the Moon. Working in units of AU/$M_\odot$/yr, we have that\footnote{\url{https://en.wikipedia.org/wiki/Gravitational\_constant}}\footnote{\url{https://en.wikipedia.org/wiki/Earth\_mass}}\footnote{\url{https://en.wikipedia.org/wiki/Lunar\_distance\_(astronomy)}}
+\begin{align*}
+    G &\approx 4 \pi^2 \; \mathrm{AU}^3 \: \mathrm{yr}^{-2} \: M_\odot^{-1} \\
+    m_{\mathrm{earth}} &= 3.003 \times 10^{-6} \; M_\odot \\
+    a_{\mathrm{moon}} &= 1/388.6 \; \mathrm{AU}.
+\end{align*}
+Substituting these into (\ref{eq:tau}) gives (see the accompanying Python script)
+\[
+    \tau_{\mathrm{moon}} = 1.409 \; \mathrm{yr}.
+\]
+
+\printbibliography
+\end{document}
