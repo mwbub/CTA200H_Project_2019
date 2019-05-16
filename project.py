@@ -8,6 +8,10 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 
+# Use TeX text rendering
+plt.rc('text', usetex=True)
+plt.rc('font', family='serif')
+
 ############################
 # Part 1
 ############################
@@ -149,29 +153,54 @@ omega = np.arctan2(-ex * np.sin(Omega) + ey * np.cos(Omega) * np.cos(I) + ez * n
 
 if not os.path.exists("plots"):
     os.mkdir("plots")
+    
+fig, ax = plt.subplots(2, 2, figsize=(10,9))
 
-plt.plot(ts, e)
-plt.xlabel("Time (years)")
-plt.ylabel("$e$")
-plt.hlines((1 - 5/3 * np.cos(np.pi/3)**2)**0.5, 0, 10*tau)
-plt.savefig("plots/e.pdf")
-plt.show()
+ax[0,0].plot(ts, e)
+ax[0,0].set_xlabel("Time (years)")
+ax[0,0].set_ylabel("$e$")
+ax[0,0].hlines((1 - 5/3 * np.cos(np.pi/3)**2)**0.5, 0, 10*tau)
+ax[0,0].set_xlim(0, 10*tau)
+ax[0,0].text(0.75, 0.9, '$e_\mathrm{max}$', 
+             horizontalalignment='center', 
+             verticalalignment='center', 
+             transform = ax[0,0].transAxes,
+             fontsize=14)
+ax[0,0].text(0, 1.075, '$\mathbf{(a)}$', 
+             horizontalalignment='center', 
+             verticalalignment='center', 
+             transform = ax[0,0].transAxes,
+             fontsize=20)
 
-plt.plot(ts, I * 180 / np.pi)
-plt.xlabel("Time (years)")
-plt.ylabel("$I$ (deg)")
-plt.savefig("plots/I.pdf")
-plt.show()
+ax[0,1].plot(ts, I * 180 / np.pi)
+ax[0,1].set_xlabel("Time (years)")
+ax[0,1].set_ylabel("$I$ (deg)")
+ax[0,1].set_xlim(0, 10*tau)
+ax[0,1].text(0, 1.075, '$\mathbf{(b)}$', 
+             horizontalalignment='center', 
+             verticalalignment='center', 
+             transform = ax[0,1].transAxes,
+             fontsize=20)
 
-plt.plot(ts, jz)
-plt.xlabel("Time (years)")
-plt.ylabel("$j_z$")
-plt.savefig("plots/j_z.pdf")
-plt.show()
+ax[1,0].plot(ts, jz)
+ax[1,0].set_xlabel("Time (years)")
+ax[1,0].set_ylabel("$j_z$")
+ax[1,0].set_xlim(0, 10*tau)
+ax[1,0].text(0, 1.075, '$\mathbf{(c)}$', 
+             horizontalalignment='center', 
+             verticalalignment='center', 
+             transform = ax[1,0].transAxes,
+             fontsize=20)
 
-plt.plot(omega * 180 / np.pi, e)
-plt.xlabel("$\omega$ (deg)")
-plt.ylabel("$e$")
-plt.savefig("plots/omega_e.pdf")
+ax[1,1].plot(omega * 180 / np.pi, e)
+ax[1,1].set_xlabel("$\omega$ (deg)")
+ax[1,1].set_ylabel("$e$")
+ax[1,1].text(0, 1.075, '$\mathbf{(d)}$', 
+             horizontalalignment='center', 
+             verticalalignment='center', 
+             transform = ax[1,1].transAxes,
+             fontsize=20)
+
+plt.savefig("plots/figure1.pdf", bbox_inches="tight")
 plt.show()
     
