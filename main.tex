@@ -64,6 +64,10 @@ Substituting these into (\ref{eq:tau}) gives (see the accompanying Python script
 \[
     \tau_{\mathrm{moon}} = 1.409 \; \mathrm{yr}.
 \]
+If instead we assume that the Moon is 10 times closer than its current separation, we find that
+\[
+    \tau_{\mathrm{moon}} = 44.54 \; \mathrm{yr}.
+\]
 
 We now implement a $4^\mathrm{th}$ order Runge-Kutta (RK4) integrator to evolve equations (\ref{eq:devec}) and (\ref{eq:djvec}). In general, given a system of ordinary differential equations $\xvec' = \mathbf{F}(\xvec, t)$ and initial data $\xvec(t)$, we can compute $\xvec(t + \Delta t)$ using the RK4 method according to the formula
 \begin{equation} \label{eq:RK4}
