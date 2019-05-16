@@ -31,8 +31,36 @@ print("tau = {:.3f} years".format(tau))
 
 print("\nPart 1(ii)")
 print("----------")
+    
+def step(f, x, t, dt):
+    """
+    Increment x(t) by dt using a 4th order Runge-Kutta integration, given
+    that x' = f(x, t)
+    """
+    # Calculate the 4th order Runge-Kutta derivatives
+    m = f(x, t)
+    n = f(x + m * dt/2, t + dt/2)
+    p = f(x + n * dt/2, t + dt/2)
+    q = f(x + p * dt, t + dt)
+    
+    return x + (m + 2*n + 2*p + q)/6 * dt
 
-def derivatives(x, t):
+def integrate(f, x0, tmin, tmax, dt):
+    """
+    Integrate x' = f(x, t) from tmin to tmax with initial data x0 and step dt.
+    """
+    ts = np.arange(tmin, tmax, dt)
+    xs = np.zeros((len(ts), len(x0)))
+    x = np.copy(x0)
+    xs[0] = x
+    
+    for i in range(1, len(ts)):
+        x = step(f, x, ts[i-1], dt)
+        xs[i] = x
+        
+    return ts, xs
+
+def dej_dt(x, t, tau):
     """
     Calculate de/dt and dj/dt at a point (x, t), where x = (e, j).
     """
@@ -41,7 +69,7 @@ def derivatives(x, t):
     j = x[3:]
     
     # Earth position vector
-    r_pl = np.array([np.cos(t), np.sin(t), 0])
+    r_pl = np.array([np.cos(2*np.pi*t), np.sin(2*np.pi*t), 0])
     
     # Cross products
     j_cross_e = np.cross(j, e)
@@ -56,21 +84,13 @@ def derivatives(x, t):
     de = -(2 * j_cross_e - 5 * r_dot_e * j_cross_r + r_dot_j * e_cross_r) / tau
     dj = -(r_dot_j * j_cross_r - 5 * r_dot_e * e_cross_r) / tau
     
+    # Recombine the derivatives into a single array
     return np.hstack([de, dj])
-    
-def step(x, t, dt):
-    """
-    Increment e and j by dt using a 4th order Runge-Kutta integration.
-    """
-    # Calculate the 4th order Runge-Kutta derivatives
-    m = derivatives(x, t)
-    n = derivatives(x + m * dt/2, t + dt/2)
-    p = derivatives(x + n * dt/2, t + dt/2)
-    q = derivatives(x + p * dt, t + dt)
-    
-    return x + (m + 2*n + 2*p + q)/6 * dt
 
 def e_j_from_angles(Omega, omega, I, e0):
+    """
+    Calculate the e and j vectors from the orbital elements.
+    """
     e = e0 * np.array([np.cos(omega) * np.cos(Omega) - np.sin(omega) * np.sin(Omega) * np.cos(I),
                        np.cos(omega) * np.sin(Omega) + np.sin(omega) * np.cos(Omega) * np.cos(I),
                        np.sin(I) * np.sin(omega)])
@@ -85,36 +105,25 @@ omega = np.pi/2
 I = np.pi/3
 e0 = 0.05
 
-e, j = e_j_from_angles(Omega, omega, I, e0)
-
 # Initial values of e and j
+e, j = e_j_from_angles(Omega, omega, I, e0)
 x = np.hstack([e, j])
 
-# Set up integration parameters and arrays
-dt = 1/20                       # Years
-ts = np.arange(0, 10*tau, dt)   # Time steps
-es = np.zeros((len(ts), 3))     # e vectors
-js = np.zeros((len(ts), 3))     # j vectors
-
-# Values of e and j at t=0
-es[0] = e
-js[0] = j
+dt = 1/20 # Years
 
 # Perform the integration
-for i in range(1, len(ts)):
-    x = step(x, ts[i-1], ts[i] - ts[i-1])
-    es[i] = x[:3]
-    js[i] = x[3:]
+ts, xs = integrate(lambda x, t: dej_dt(x, t, tau), x, 0, 10 * tau, dt)
+es = xs[:,:3]
+js = xs[:,3:]
     
 # Sanity checks
 norms = np.sum(es**2 + js**2, axis=1)
+dots = np.array([np.dot(es[i], js[i]) for i in range(len(es))])
 
 print("\nSanity Checks")
 print("-------------")
 print("Minimum norm = {}".format(np.min(norms)))
 print("Maximum norm = {}".format(np.max(norms)))
-
-dots = np.array([np.dot(es[i], js[i]) for i in range(len(es))])
 print("Minimum dot product = {}".format(np.min(np.abs(dots))))
 print("Maximum dot product = {}".format(np.max(dots)))
 
@@ -131,20 +140,19 @@ Omega = np.arctan2(jx, -jy)
 omega = np.arctan2(-ex * np.sin(Omega) + ey * np.cos(Omega) * np.cos(I) + ez * np.sin(I),
                    ex * np.cos(Omega) + ey * np.sin(Omega))
 
-jz2 = (1 - e**2)**0.5 * np.cos(I)
-
 if not os.path.exists("plots"):
     os.mkdir("plots")
 
 plt.plot(ts, e)
 plt.xlabel("Time (years)")
 plt.ylabel("$e$")
+plt.hlines((1 - 5/3 * np.cos(np.pi/3)**2)**0.5, 0, 10*tau)
 plt.savefig("plots/e.pdf")
 plt.show()
 
 plt.plot(ts, I * 180 / np.pi)
 plt.xlabel("Time (years)")
-plt.ylabel("I (deg)")
+plt.ylabel("$I$ (deg)")
 plt.savefig("plots/I.pdf")
 plt.show()
 
@@ -154,14 +162,9 @@ plt.ylabel("$j_z$")
 plt.savefig("plots/j_z.pdf")
 plt.show()
 
-plt.plot(ts, jz2)
-plt.xlabel("Time (years)")
-plt.ylabel("$j_z$")
-plt.show()
-
-plt.plot(e, omega * 180 / np.pi)
-plt.xlabel("e")
-plt.ylabel("$\omega$ (deg)")
+plt.plot(omega * 180 / np.pi, e)
+plt.xlabel("$\omega$ (deg)")
+plt.ylabel("$e$")
 plt.savefig("plots/omega_e.pdf")
 plt.show()
     
