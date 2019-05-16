@@ -1,4 +1,4 @@
-\documentclass[11pt]{article}
+\documentclass[10pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[margin=3cm]{geometry}
 \usepackage{amsmath}
@@ -12,11 +12,12 @@
 
 \newcommand{\evec}{\mathbf{e}}
 \newcommand{\ehat}{\hat{\evec}}
-\newcommand{\jvec}{{\mathbf{j}}}
+\newcommand{\jvec}{\mathbf{j}}
 \newcommand{\jhat}{\hat{\jvec}}
 \newcommand{\Jvec}{\mathbf{J}}
 \newcommand{\rpl}{\mathbf{r_{\mathrm{pl}}}}
 \newcommand{\rplhat}{\mathbf{\hat{r}_{\mathrm{pl}}}}
+\newcommand{\xvec}{\mathbf{x}}
 
 \addbibresource{refs.bib}
 
@@ -42,7 +43,7 @@ Assuming that the Moon is massless, then according to the assignment sheet and t
 \end{align}
 where $\rpl$ is the position of the Earth in its orbit about the Sun, which is assumed to be circular and is therefore given by
 \begin{equation} \label{eq:rpl}
-    \rpl(t) = 1 \, \mathrm{AU} \, (\cos(t/1 \, \mathrm{year}), \; \sin(t/1 \, \mathrm{year}), \; 0)
+    \rpl(t) = 1 \, \mathrm{AU} \, (\cos(2 \pi t/1 \, \mathrm{year}), \; \sin(2 \pi t/1 \, \mathrm{year}), \; 0)
 \end{equation}
 and
 \begin{equation} \label{eq:tau}
@@ -63,6 +64,21 @@ Substituting these into (\ref{eq:tau}) gives (see the accompanying Python script
 \[
     \tau_{\mathrm{moon}} = 1.409 \; \mathrm{yr}.
 \]
+
+We now implement a $4^\mathrm{th}$ order Runge-Kutta (RK4) integrator to evolve equations (\ref{eq:devec}) and (\ref{eq:djvec}). In general, given a system of ordinary differential equations $\xvec' = \mathbf{F}(\xvec, t)$ and initial data $\xvec(t)$, we can compute $\xvec(t + \Delta t)$ using the RK4 method according to the formula
+\begin{equation} \label{eq:RK4}
+    \xvec(t + \Delta t) = \xvec(t) + \frac{\mathbf{m} + 2\mathbf{n} + 2\mathbf{p} + \mathbf{q}}{6} \Delta t
+\end{equation}
+where
+\begin{align}
+\begin{split} \label{eq:RK4_derivatives}
+    \mathbf{m} &= \mathbf{F} \left( \xvec, t \right) \\
+    \mathbf{n} &= \mathbf{F} \left( \xvec + \textbf{m} \cdot \tfrac{1}{2} \Delta t, t + \tfrac{1}{2} \Delta t \right) \\
+    \mathbf{p} &= \mathbf{F} \left( \xvec + \textbf{n} \cdot \tfrac{1}{2} \Delta t, t + \tfrac{1}{2} \Delta t \right) \\
+    \mathbf{q} &= \mathbf{F} \left( \xvec + \textbf{p} \cdot \Delta t, t + \Delta t \right)
+\end{split}
+\end{align}
+\parencite{hirsch2013}.
 
 \printbibliography
 \end{document}
