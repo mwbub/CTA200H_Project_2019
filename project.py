@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 print("Part 1(i)")
 print("---------")
 
+# Calculation of tau_moon
 G = 4 * np.pi**2    # AU^3 yr^-2 Mo^-1
 m_sun = 1           # Mo (solar masses)
 m_earth = 3.003e-6  # Mo
@@ -25,7 +26,13 @@ a_moon = 1/388.6    # AU
 P_moon = 2 * np.pi * (a_moon**3 / G / m_earth)**0.5               # Years
 tau = m_earth / m_sun * r_pl**3 / a_moon**3 * P_moon / 3 / np.pi  # Years
 
+# Recalculate tau for a closer Moon
+a_moon_close = a_moon / 10
+P_moon_close = 2 * np.pi * (a_moon_close**3 / G / m_earth)**0.5
+tau_close = m_earth / m_sun * r_pl**3 / a_moon_close**3 * P_moon_close / 3 / np.pi
+
 print("tau = {:.3f} years".format(tau))
+print("tau_close = {:.3f} years".format(tau_close))
 
 # (ii) Implement a Runge-Kutta of order 4 in Python to solve the ODEs
 
@@ -58,7 +65,7 @@ def integrate(f, x0, tmin, tmax, dt):
         x = step(f, x, ts[i-1], dt)
         xs[i] = x
         
-    return ts, xs
+    return xs, ts
 
 def dej_dt(x, t, tau):
     """
@@ -112,7 +119,7 @@ x = np.hstack([e, j])
 dt = 1/20 # Years
 
 # Perform the integration
-ts, xs = integrate(lambda x, t: dej_dt(x, t, tau), x, 0, 10 * tau, dt)
+xs, ts = integrate(lambda x, t: dej_dt(x, t, tau), x, 0, 10 * tau, dt)
 es = xs[:,:3]
 js = xs[:,3:]
     
