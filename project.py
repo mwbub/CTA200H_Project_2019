@@ -98,7 +98,7 @@ def dej_dt(x, t, tau):
     # Recombine the derivatives into a single array
     return np.hstack([de, dj])
 
-def e_j_from_angles(Omega, omega, I, e0):
+def e_j_from_elements(Omega, omega, I, e0):
     """
     Calculate the e and j vectors from the orbital elements.
     """
@@ -117,7 +117,7 @@ I = np.pi/3
 e0 = 0.05
 
 # Initial values of e and j
-e, j = e_j_from_angles(Omega, omega, I, e0)
+e, j = e_j_from_elements(Omega, omega, I, e0)
 x = np.hstack([e, j])
 
 dt = 1/20 # Years
@@ -126,6 +126,11 @@ dt = 1/20 # Years
 xs, ts = integrate(lambda x, t: dej_dt(x, t, tau), x, 0, 10 * tau, dt)
 es = xs[:,:3]
 js = xs[:,3:]
+
+# Redo the integration with tau_close
+xs_close, ts_close = integrate(lambda x, t: dej_dt(x, t, tau_close), x, 0, 10 * tau_close, dt)
+es_close = xs_close[:,:3]
+js_close = xs_close[:,3:]
     
 # Sanity checks
 norms = np.sum(es**2 + js**2, axis=1)
@@ -142,65 +147,83 @@ print("Maximum dot product = {}".format(np.max(dots)))
 # Part 2
 ############################
 
-ex, ey, ez = es.T
-jx, jy, jz = js.T
-e = (ex**2 + ey**2 + ez**2)**0.5
+def elements_from_e_j(es, js):
+    """
+    Convert from an array of e and j vectors to orbital elements.
+    """
+    ex, ey, ez = es.T
+    jx, jy, jz = js.T
+    e = (ex**2 + ey**2 + ez**2)**0.5
+    
+    I = np.arctan2((jx**2 + jy**2)**0.5, jz)
+    Omega = np.arctan2(jx, -jy)
+    omega = np.arctan2(-ex * np.sin(Omega) + ey * np.cos(Omega) * np.cos(I) + ez * np.sin(I),
+                       ex * np.cos(Omega) + ey * np.sin(Omega))
+    
+    return e, I, Omega, omega
 
-I = np.arctan2((jx**2 + jy**2)**0.5, jz)
-Omega = np.arctan2(jx, -jy)
-omega = np.arctan2(-ex * np.sin(Omega) + ey * np.cos(Omega) * np.cos(I) + ez * np.sin(I),
-                   ex * np.cos(Omega) + ey * np.sin(Omega))
+# Convert from e and j vectors to classical elements
+e, I, Omega, omega = elements_from_e_j(es, js)
+e_close, I_close, Omega_close, omega_close = elements_from_e_j(es_close, js_close)
 
 if not os.path.exists("plots"):
     os.mkdir("plots")
+
+def panel_plot(ts, e, I, Omega, omega, filename):
+    """
+    Make a 4-panel plot of e vs t, I vs t, jz vs t, and e vs omega.
+    """
+    jz = (1 - e**2)**0.5 * np.cos(I)
+
+    fig, ax = plt.subplots(2, 2, figsize=(10,9))
+
+    ax[0,0].plot(ts, e)
+    ax[0,0].set_xlabel("Time (years)")
+    ax[0,0].set_ylabel("$e$")
+    ax[0,0].hlines((1 - 5/3 * np.cos(I[0])**2)**0.5, ts[0], ts[-1])
+    ax[0,0].set_xlim(ts[0], ts[-1])
+    ax[0,0].text(0.75, 0.9, '$e_\mathrm{max}$', 
+                 horizontalalignment='center', 
+                 verticalalignment='center', 
+                 transform = ax[0,0].transAxes,
+                 fontsize=14)
+    ax[0,0].text(0, 1.075, '$\mathbf{(a)}$', 
+                 horizontalalignment='center', 
+                 verticalalignment='center', 
+                 transform = ax[0,0].transAxes,
+                 fontsize=20)
     
-fig, ax = plt.subplots(2, 2, figsize=(10,9))
-
-ax[0,0].plot(ts, e)
-ax[0,0].set_xlabel("Time (years)")
-ax[0,0].set_ylabel("$e$")
-ax[0,0].hlines((1 - 5/3 * np.cos(np.pi/3)**2)**0.5, 0, 10*tau)
-ax[0,0].set_xlim(0, 10*tau)
-ax[0,0].text(0.75, 0.9, '$e_\mathrm{max}$', 
-             horizontalalignment='center', 
-             verticalalignment='center', 
-             transform = ax[0,0].transAxes,
-             fontsize=14)
-ax[0,0].text(0, 1.075, '$\mathbf{(a)}$', 
-             horizontalalignment='center', 
-             verticalalignment='center', 
-             transform = ax[0,0].transAxes,
-             fontsize=20)
-
-ax[0,1].plot(ts, I * 180 / np.pi)
-ax[0,1].set_xlabel("Time (years)")
-ax[0,1].set_ylabel("$I$ (deg)")
-ax[0,1].set_xlim(0, 10*tau)
-ax[0,1].text(0, 1.075, '$\mathbf{(b)}$', 
-             horizontalalignment='center', 
-             verticalalignment='center', 
-             transform = ax[0,1].transAxes,
-             fontsize=20)
-
-ax[1,0].plot(ts, jz)
-ax[1,0].set_xlabel("Time (years)")
-ax[1,0].set_ylabel("$j_z$")
-ax[1,0].set_xlim(0, 10*tau)
-ax[1,0].text(0, 1.075, '$\mathbf{(c)}$', 
-             horizontalalignment='center', 
-             verticalalignment='center', 
-             transform = ax[1,0].transAxes,
-             fontsize=20)
-
-ax[1,1].plot(omega * 180 / np.pi, e)
-ax[1,1].set_xlabel("$\omega$ (deg)")
-ax[1,1].set_ylabel("$e$")
-ax[1,1].text(0, 1.075, '$\mathbf{(d)}$', 
-             horizontalalignment='center', 
-             verticalalignment='center', 
-             transform = ax[1,1].transAxes,
-             fontsize=20)
-
-plt.savefig("plots/figure1.pdf", bbox_inches="tight")
-plt.show()
+    ax[0,1].plot(ts, I * 180 / np.pi)
+    ax[0,1].set_xlabel("Time (years)")
+    ax[0,1].set_ylabel("$I$ (deg)")
+    ax[0,1].set_xlim(ts[0], ts[-1])
+    ax[0,1].text(0, 1.075, '$\mathbf{(b)}$', 
+                 horizontalalignment='center', 
+                 verticalalignment='center', 
+                 transform = ax[0,1].transAxes,
+                 fontsize=20)
     
+    ax[1,0].plot(ts, jz)
+    ax[1,0].set_xlabel("Time (years)")
+    ax[1,0].set_ylabel("$j_z$")
+    ax[1,0].set_xlim(ts[0], ts[-1])
+    ax[1,0].text(0, 1.075, '$\mathbf{(c)}$', 
+                 horizontalalignment='center', 
+                 verticalalignment='center', 
+                 transform = ax[1,0].transAxes,
+                 fontsize=20)
+    
+    ax[1,1].plot(omega * 180 / np.pi, e)
+    ax[1,1].set_xlabel("$\omega$ (deg)")
+    ax[1,1].set_ylabel("$e$")
+    ax[1,1].text(0, 1.075, '$\mathbf{(d)}$', 
+                 horizontalalignment='center', 
+                 verticalalignment='center', 
+                 transform = ax[1,1].transAxes,
+                 fontsize=20)
+    
+    plt.savefig(filename, bbox_inches="tight")
+    plt.show()
+        
+panel_plot(ts, e, I, Omega, omega, "plots/figure1.pdf")
+panel_plot(ts_close, e_close, I_close, Omega_close, omega_close, "plots/figure2.pdf")
