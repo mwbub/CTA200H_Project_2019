@@ -36,7 +36,7 @@ P_moon_close = 2 * np.pi * (a_moon_close**3 / G / m_earth)**0.5
 tau_close = m_earth / m_sun * r_pl**3 / a_moon_close**3 * P_moon_close / 3 / np.pi
 
 print("tau = {:.3f} years".format(tau))
-print("tau_close = {:.3f} years".format(tau_close))
+print("tau_close = {:.2f} years".format(tau_close))
 
 # (ii) Implement a Runge-Kutta of order 4 in Python to solve the ODEs
 
@@ -111,13 +111,13 @@ def e_j_from_elements(Omega, omega, I, e0):
     return e, j
 
 # Initial conditions
-Omega = 0
-omega = np.pi/2
-I = np.pi/3
+Omega0 = 0
+omega0 = np.pi/2
+I0 = np.pi/3
 e0 = 0.05
 
 # Initial values of e and j
-e, j = e_j_from_elements(Omega, omega, I, e0)
+e, j = e_j_from_elements(Omega0, omega0, I0, e0)
 x = np.hstack([e, j])
 
 dt = 1/20 # Years
@@ -187,7 +187,7 @@ def panel_plot(ts, e, I, Omega, omega, filename):
                  verticalalignment='center', 
                  transform = ax[0,0].transAxes,
                  fontsize=14)
-    ax[0,0].text(0, 1.075, '$\mathbf{(a)}$', 
+    ax[0,0].text(0, 1.075, r'\textbf{(a)}', 
                  horizontalalignment='center', 
                  verticalalignment='center', 
                  transform = ax[0,0].transAxes,
@@ -197,7 +197,7 @@ def panel_plot(ts, e, I, Omega, omega, filename):
     ax[0,1].set_xlabel("Time (years)")
     ax[0,1].set_ylabel("$I$ (deg)")
     ax[0,1].set_xlim(ts[0], ts[-1])
-    ax[0,1].text(0, 1.075, '$\mathbf{(b)}$', 
+    ax[0,1].text(0, 1.075, r'\textbf{(b)}', 
                  horizontalalignment='center', 
                  verticalalignment='center', 
                  transform = ax[0,1].transAxes,
@@ -207,7 +207,7 @@ def panel_plot(ts, e, I, Omega, omega, filename):
     ax[1,0].set_xlabel("Time (years)")
     ax[1,0].set_ylabel("$j_z$")
     ax[1,0].set_xlim(ts[0], ts[-1])
-    ax[1,0].text(0, 1.075, '$\mathbf{(c)}$', 
+    ax[1,0].text(0, 1.075, r'\textbf{(c)}', 
                  horizontalalignment='center', 
                  verticalalignment='center', 
                  transform = ax[1,0].transAxes,
@@ -216,7 +216,7 @@ def panel_plot(ts, e, I, Omega, omega, filename):
     ax[1,1].plot(omega * 180 / np.pi, e)
     ax[1,1].set_xlabel("$\omega$ (deg)")
     ax[1,1].set_ylabel("$e$")
-    ax[1,1].text(0, 1.075, '$\mathbf{(d)}$', 
+    ax[1,1].text(0, 1.075, r'\textbf{(d)}', 
                  horizontalalignment='center', 
                  verticalalignment='center', 
                  transform = ax[1,1].transAxes,
@@ -227,3 +227,53 @@ def panel_plot(ts, e, I, Omega, omega, filename):
         
 panel_plot(ts, e, I, Omega, omega, "plots/figure1.pdf")
 panel_plot(ts_close, e_close, I_close, Omega_close, omega_close, "plots/figure2.pdf")
+
+############################
+# Part 3
+############################
+
+Is = np.array([30, 45, 80]) 
+
+fig, ax = plt.subplots()
+
+for i in range(len(Is)):
+    e, j = e_j_from_elements(Omega0, omega0, Is[i] * np.pi / 180, e0)
+    x = np.hstack([e, j])
+    xs, ts = integrate(lambda x, t: dej_dt(x, t, tau_close), x, 0, 13 * tau_close, dt)
+    e, I, Omega, omega = elements_from_e_j(xs[:,:3], xs[:,3:])
+    
+    ax.plot(ts, e, label=r"$I_0 = {}^\circ$".format(Is[i]))
+    ax.hlines((1 - 5/3 * np.cos(I[0])**2)**0.5, ts[0], ts[-1])
+    ax.set_xlim(ts[0], ts[-1])
+    ax.set_xlabel("Time (years)")
+    ax.set_ylabel("$e$")
+    ax.legend()
+    
+R_earth = 4.26349651e-5 # AU
+collision = 1 - R_earth/a_moon_close
+ax.hlines(collision, ts[0], ts[-1], colors='r')
+
+plt.savefig("plots/figure3.pdf")
+plt.show()
+
+############################
+# Part 4
+############################
+
+dts = [20, 10, 5]
+
+fig, ax = plt.subplots()
+
+for i in range(len(dts)):
+    e, j = e_j_from_elements(Omega0, omega0, I0, e0)
+    x = np.hstack([e, j])
+    xs, ts = integrate(lambda x, t: dej_dt(x, t, tau), x, 0, 10 * tau, 1/dts[i])
+    es = xs[:,:3]
+    e = np.sum(es**2, axis=1)
+    ax.plot(ts, e, label=r"$\Delta t = 1/{}$ yr".format(dts[i]))
+    ax.set_xlabel("Time (years)")
+    ax.set_ylabel("$e$")
+    ax.legend()
+    
+plt.savefig("plots/figure4.pdf")
+plt.show()
